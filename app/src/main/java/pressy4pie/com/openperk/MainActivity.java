@@ -14,7 +14,9 @@ import android.view.MenuItem;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
+    //text box for status.
     public TextView tb_runningCheck;
+    //task boolean to enable cancellation (stopping) of task.
     public boolean running;
 
     @Override
@@ -30,46 +32,110 @@ public class MainActivity extends AppCompatActivity {
         tb_runningCheck.setTextColor(Color.RED);
     }
 
-    private class maintask extends AsyncTask<String, Void, String> {
+
+    /*
+    This is our main workhorse. Network stuff can be done here.
+     */
+    private class maintask extends AsyncTask<Void, Integer, Boolean> {
+        //For our Try/Catch part.
+        Exception error;
         @Override
         protected void onPreExecute() {
             //before the task actually starts.
             //has access to gui.
 
+            //tell the user we are starting the task.
             tb_runningCheck.setTextColor(Color.GREEN);
             tb_runningCheck.setText("Starting.");
+            running = false;
         }
         @Override
         protected void onCancelled() {
+            //if the stop button is hit.
+            //has access to gui.
+
             //he's dead jim.
             running = false;
             tb_runningCheck.setTextColor(Color.RED);
             tb_runningCheck.setText("Stopped.");
         }
         @Override
-        protected String doInBackground(String... params) {
+        protected Boolean doInBackground(Void... params) {
             //the main hard work to be done...
             //does not have access to gui.
+            publishProgress(Integer.valueOf(1));
             int x = 0;
             running = true;
-            while(running ){
-                Log.d("maintask", "doing important stuff here...");
-                x++;
-                if (isCancelled()) break;
+            try {
+                while (running) {
+                    if (isCancelled()) break;
+                    /*
+                    This is just dummy work. the real work goes down here but i don't know what
+                    the real work is...
+                    .
+                    . "if (isCancelled()) break;" needs to be placed throughout the work
+                    . to be able to properly cancel.
+                    .
+                    .
+                    .
+                    .
+                     */
+                    if(((x%100) == 0)){
+                        Thread.sleep(1000);
+                        Log.d("maintask",String.valueOf(x) + " doing important stuff here...");
+                    }
+                    x++;
+                    if (isCancelled()) break;
+                }
+                return true;
+            } catch (Exception e) {
+                //Can't do anything with the error other than log cat it here.
+                //Put it in the on post execute.
+                error = e;
+                return false;
             }
-            return null;
         }
-        protected void onProgressUpdate(Void... values){
+        protected void onProgressUpdate(Integer... values){
+            //needs to be updated.
+            //has access to gui.
 
+            Log.d("maintask", String.valueOf(values[0]) + " Means go.");
+            tb_runningCheck.setTextColor(Color.GREEN);
+            tb_runningCheck.setText("Running.");
+        }
+        protected void onPostExecute(Boolean result){
+            //after work is done.
+            //has access to gui.
+            if (result) {
+                //executed properly.
+                //this can be used for cleanup.
+                //But this block may never be executed depending on the actual work done.
+            }
+            else {
+                //make sure there are no null pointers thrown.
+                if (error != null){
+                    tb_runningCheck.setTextColor(Color.RED);
+                    tb_runningCheck.setText("Failed.");
+                    //put it in the logcat for good measure.
+                    Log.d("maintask", String.valueOf(error.getMessage()));
+                }
+            }
         }
     }
 
+
+    /*
+    These are the button functions. The are executed on click etc.
+     */
+
+    //Start Button
     public void Start(View view) {
         Log.d("Start Process", "Starting.");
-        new maintask().execute("");
+        new maintask().execute();
 
     }
 
+    //Stop Button
     public void Stop(View view){
         Log.d("Start Process", "Stopping.");
         new maintask().cancel(true);
