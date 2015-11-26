@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">OpenPerk</string>
+    <!-- Button text -->
+    <string name="button_start">Start</string>
+    <string name="button_stop">Stop</string>
+</resources>
